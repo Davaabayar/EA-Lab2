@@ -1,38 +1,53 @@
 # EA-Lab2
-#Constructor based DI 
+#####Constructor based DI 
 
+Add @Configuration and @ComponentScan notations on Config class.
+<pre>
 @Configuration
 @ComponentScan("edu.mum.cs544")
 @EnableAspectJAutoProxy
 public class Config {
 }
-
-App.class
+</pre>
+Create Application context from defined java config/App.class/
+<pre>
 ApplicationContext context = new AnnotationConfigApplicationContext(Config.class);
+</pre>
+Define custom constructor in CustomerService.java. Beans are created when ComponentScan works and injected in the constructor.
+    
+    package edu.mum.cs544;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.stereotype.Service;
+    
+    @Service
+    public class CustomerService implements ICustomerService {   
+       private ICustomerDAO customerDAO;
+       private IEmailSender emailSender;
+       
+       //custom constructor
+       public CustomerService(ICustomerDAO customerDAO, IEmailSender emailSender) {
+          this.customerDAO = customerDAO;
+          this.emailSender = emailSender;
+          System.out.println("Constructor based DI, injected beans are: " + customerDAO + ", " +emailSender);
+       }
+    }
 
-CustomerService.java
-package edu.mum.cs544;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-@Service
-public class CustomerService implements ICustomerService {   
-   private ICustomerDAO customerDAO;
-   private IEmailSender emailSender;
-
-   public CustomerService(ICustomerDAO customerDAO, IEmailSender emailSender) {
-      this.customerDAO = customerDAO;
-      this.emailSender = emailSender;
-      System.out.println("Constructor based DI, injected beans are: " + customerDAO + ", " +emailSender);
-   }
-}
-
-#####Basic AOP
-@Aspect
-@Component
-public class LogAspect {
-
+###Basic AOP
+Tasks
+<ol>
+<li>Reconfigure the application so that whenever the sendMail method on the EmailSender is called, a log message is created (using an after advice AOP annotation).
+</li>
+<li>Now change the log advice in such a way that the email address and the message are logged as well. You should be able to retrieve the email address and the message through the arguments of the sendEmail() method. </li>
+<li>Change the log advice again, this time so that the outgoing mail server is logged as well. The outgoingMailServer is an attribute of the EmailSender object, which you can retrieve through the joinpoint.getTarget() method. </li>
+<li>Write a new advice that calculates the duration of the method calls to the DAO
+    Object and outputs the result to the console.
+</li>
+</ol> 
+Defined aspect for above mentioned tasks.
+    
+    @Aspect
+    @Component
+    public class LogAspect{
     @After("execution(* edu.mum.cs544.EmailSender.sendEmail(..))")
     public void logAfter(JoinPoint joinPoint){
         //A
@@ -42,7 +57,8 @@ public class LogAspect {
         //C
         System.out.print(" outgoing mail server=" + ((EmailSender) joinPoint.getTarget()).getOutgoingMailServer());
     }
-
+    
+    //Around method will be used to calculate duration of method execution
     @Around("execution(* edu.mum.cs544.CustomerDAO.*(..))")
     public Object invoke(ProceedingJoinPoint call) throws Throwable{
         StopWatch sw = new StopWatch();
@@ -55,28 +71,44 @@ public class LogAspect {
     }
 }
 
-#####Bank Application 
-#DI
-1.	Write AppConfig.class using @Configuration, @ComponentScan("edu.mum.cs544.bank")
-2.	Put Component based notation to classes we need DI.
+###Bank Application 
+#####DI
+Write AppConfig.class using @Configuration, @ComponentScan
+       
+    package edu.mum.cs544.bank;
+    import org.springframework.context.annotation.ComponentScan;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.context.annotation.EnableAspectJAutoProxy;
+    
+    @Configuration
+    @ComponentScan("edu.mum.cs544")
+    @EnableAspectJAutoProxy
+    public class Config {
+    
+    }
+Put Component based notation to classes we need DI.
+<pre>
 @Component
-public class Logger implements ILogger{
+public class Logger implements ILogger{...
 
 @Component
-public class JMSSender implements IJMSSender{
+public class JMSSender implements IJMSSender{...
 
 @Component
-public class CurrencyConverter implements ICurrencyConverter{
+public class CurrencyConverter implements ICurrencyConverter{...
+
 @Repository
-public class AccountDAO implements IAccountDAO {
+public class AccountDAO implements IAccountDAO {...
+</pre>
 
-3.	Constructor based DI for AccountService.java
-a.	@Service for AccountService
+Constructor based DI for AccountService.java. Use @Service annotation for AccountService
+<pre>
 @Service
-public class AccountService implements IAccountService {
+public class AccountService implements IAccountService {...
+</pre>
 
-b.	Remove previous constructor
-c.	Add custom constructor
+Remove previous constructor and add following custom constructor
+<pre>
 public AccountService(IAccountDAO accountDAO, ICurrencyConverter currencyConverter, IJMSSender jmsSender, ILogger logger) {
    System.out.println("Custom constructor");
    this.accountDAO = accountDAO;
@@ -84,47 +116,50 @@ public AccountService(IAccountDAO accountDAO, ICurrencyConverter currencyConvert
    this.jmsSender = jmsSender;
    this.logger = logger;
 }
- 
-#2.1 Log every call to any method in the bank.dao package (using the Logger).
-1.	Add dependency
-<dependency>
-  <groupId>org.aspectj</groupId>
-  <artifactId>aspectjrt</artifactId>
-  <version>1.9.2</version>
-</dependency>
-<dependency>
-  <groupId>org.aspectj</groupId>
-  <artifactId>aspectjweaver</artifactId>
-  <version>1.9.2</version>
-</dependency>
-2.	Enable JautoProxy in AppConfig
-@Configuration
-@ComponentScan("edu.mum.cs544.bank")
-@EnableAspectJAutoProxy
-public class AppConfig {
-}
-3.	Add new Aspect DaoLogAspect.java 
+</pre>
+####2.1 Log every call to any method in the bank.dao package (using the Logger).
+Add dependencies
+
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjrt</artifactId>
+      <version>1.9.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>1.9.2</version>
+    </dependency>
+
+Enable JautoProxy in AppConfig
+
+    @Configuration
+    @ComponentScan("edu.mum.cs544.bank")
+    @EnableAspectJAutoProxy
+    public class AppConfig {
+    }
+
+Add new Aspect DaoLogAspect.java 
+<pre>
 import edu.mum.cs544.bank.logging.ILogger;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 @Aspect
 @Component
 public class DoaLogAdvice {
     @Autowired
     private ILogger iLogger;
-
     @After("execution(* edu.mum.cs544.bank.dao.*.*(..))")
     public void log(JoinPoint joinPoint){
         iLogger.log("+++++++++++++++ DAO Log Advice called method = " + joinPoint.getSignature().getName());
     }
 }
-
-#2.2 Use the Spring StopWatch functionality to measure the duration of all service
-
+</pre>
+####2.2 Use the Spring StopWatch functionality to measure the duration of all service
+<pre>
 @Aspect
 @Component
 public class MeasureServiceAdvice {
@@ -144,9 +179,9 @@ public class MeasureServiceAdvice {
         return retVal;
     }
 }
-
-#2.3 Log every JMS message that is sent (using the Logger)
-
+</pre>
+####2.3 Log every JMS message that is sent (using the Logger)
+<pre>
 @Aspect
 @Component
 public class JMSMessageLogAdvice {
@@ -158,8 +193,9 @@ public class JMSMessageLogAdvice {
         iLogger.log("+++++++++++++++ JMSMessageLogAdvice " + joinPoint.getSignature().getName() + " called, message: " + joinPoint.getArgs()[0]);
     }
 }
-
-#2.5 Be sure to inject the logger into the advice class.
+</pre>
+####2.5 Be sure to inject the logger into the advice class.
+<pre>
 @Aspect
 @Component
 public class DoaLogAdvice {
@@ -171,5 +207,4 @@ public class DoaLogAdvice {
         iLogger.log("+++++++++++++++ DAO Log Advice called method = " + joinPoint.getSignature().getName());
     }
 }
-
-
+</pre>
