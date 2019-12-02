@@ -117,7 +117,9 @@ public AccountService(IAccountDAO accountDAO, ICurrencyConverter currencyConvert
    this.logger = logger;
 }
 </pre>
+
 ####2.1 Log every call to any method in the bank.dao package (using the Logger).
+
 Add dependencies
 
     <dependency>
@@ -158,7 +160,9 @@ public class DoaLogAdvice {
     }
 }
 </pre>
+
 ####2.2 Use the Spring StopWatch functionality to measure the duration of all service
+
 <pre>
 @Aspect
 @Component
@@ -180,7 +184,9 @@ public class MeasureServiceAdvice {
     }
 }
 </pre>
+
 ####2.3 Log every JMS message that is sent (using the Logger)
+
 <pre>
 @Aspect
 @Component
@@ -194,7 +200,9 @@ public class JMSMessageLogAdvice {
     }
 }
 </pre>
+
 ####2.5 Be sure to inject the logger into the advice class.
+
 <pre>
 @Aspect
 @Component
