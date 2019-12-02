@@ -186,7 +186,7 @@ public class MeasureServiceAdvice {
 </pre>
 
 ####2.3 Log every JMS message that is sent (using the Logger)
-
+Add another Advise class for JMSSender.sendJMSMessage() method.
 <pre>
 @Aspect
 @Component
@@ -202,6 +202,7 @@ public class JMSMessageLogAdvice {
 </pre>
 
 ####2.5 Be sure to inject the logger into the advice class.
+Logger is injected through @Autowired notation.
 
 <pre>
 @Aspect
@@ -216,3 +217,8 @@ public class DoaLogAdvice {
     }
 }
 </pre>
+
+#####Folder structure:
+1. Exercise AOP.1 - Lab2-AOP-1
+2. Bank Application Dependency Injection Exercise 1: Lab2-Bank_Application
+3. Bank Application Dependency Injection Exercise 2: Lab2-AOP-2
